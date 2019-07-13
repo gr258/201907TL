@@ -1,0 +1,119 @@
+请提供一个通用json列表的过滤器，对于任意给出的合法的json列表，通过给定的过滤条件表达式filterExpr，筛选出符合条件的json子列表。其中，filterExpr为字符串，包括一个或多个根据simpleFilterExpr格式化的字符串，使用&字符连接，规格如下：
+
+filterExpr := <simpleFilterExpr>[&<simpleFilterExpr>]*	                    //表示一个或多个simpleFilterExpr，以&隔开
+
+simpleFilterExpr := <attrName>[.<attrName>]*[.<op>]?=<value>[,<value>]*
+
+		                                                                                        //表示op有0或1个，等号后面跟一个或多个value，value间用逗号隔开
+
+op := eq | neq | gt | lt | gte | lte | cont | ncont
+
+attrName := string
+
+value := number or string                                                             //value仅包含数字（0-9）和字母（a-z和A-Z） 
+
+
+
+其中(下列符号仅用来解释规格说明，不需要实现):
+
+* zero or more occurrences
+
+? zero or one occurrence
+
+[] grouping of expressions to be used with ? and *
+
+<> name separator
+
+
+
+其中simpleFilterExpr有如下种类：
+
+<attrName>.eq=<value>[,<value>]*            //Attribute equal to one of the values in the list
+
+<attrName>=<value>[,<value>]* 		//Alternative representation of equality. 
+
+<attrName>.neq=<value>[,<value>]* 	        //Attribute not equal to any of the values in the list
+
+<attrName>.gt=<value> 				//Attribute greater than <value>
+
+<attrName>.gte=<value> 				//Attribute greater than or equal to <value>
+
+<attrName>.lt=<value> 				//Attribute less than <value>
+
+<attrName>.lte=<value> 				//Attribute less than or equal to <value>
+
+<attrName>.cont=<value>[,<value>]* 	//Attribute contains (at least) one of the values in the list
+
+<attrName>.ncont=<value>[,<value>]*       //Attribute does not contain any of the values in the list
+
+
+
+Note:
+
+1、cont/ncout对应attr类型为list
+
+2、attrName不包含上述key word
+
+3、如果attrName在json列表中某个entry不存在或对应值为null，则该entry不应该被选中
+
+4、value能够适配到json列表中的类型，例如id.eq=5，可以适配json列表中5和"5"
+
+
+
+比如给定json 列表：
+
+[
+
+{"id":123, "weight":100, "parts":[{"id":1, "color":"red"}, {"id":2, "color":"green"}]},
+
+{"id":456, "weight":500, "parts":[{"id":3, "color":"green"}, {"id":2, "color":"blue"}]}
+
+]
+
+
+
+给定filterExpr为"weight.eq=100" 或 "weight=100",得到
+
+[
+
+{"id":123, "weight":100, "parts":[{"id":1, "color":"red"}, {"id":2, "color":"green"}]}
+
+]
+
+
+
+又如：filterExpr为"parts.color=green&parts.id=3" 或 filterExpr为"parts.color.eq=green&parts.id.eq=3"，得到
+
+[
+
+{"id":456, "weight":500, "parts":[{"id":3, "color":"green"}, {"id":2, "color":"blue"}]}
+
+]
+
+但对于filterExpr为"parts.color=green&parts.id=1" 或 filterExpr为"parts.color.eq=green&parts.id.eq=1"，应该得到
+
+[]，因为必须要在同一个entry中联合判断查询条件
+
+
+
+过滤器也需要支持{"item":{"name": "car"} }这种json格式
+
+
+
+说明：
+
+仅可以使用json库和ut框架，不允许使用其他三方库
+
+
+
+要求：
+
+1、使用TDD开发。
+
+2、代码足够clean code。
+
+3、提交：
+
+   a、ut测试用例和源码
+
+   b、64位下可执行文件，例如输入json文件（仅包含一个json列表）和filterExpr，打印出过滤后的json子串。
