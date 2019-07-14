@@ -42,6 +42,8 @@ public:
     bool    Match(cJSON* pRoot);
     bool    Match(cJSON* pRoot, CSimpleFilterExpr &sfe);
     bool    Match(cJSON* pJsonStruct, list<string> &listValue);
+    list<cJSON*> GetObject(cJSON* pParent, const char *strAttrName);
+    list<cJSON*> GetObject(list<cJSON*> &listParent, const char *strAttrName);
 private:
     cJSON*  m_pJsonData;
     string  m_strResult;

@@ -173,47 +173,94 @@ bool CJsonFilter::Match(cJSON* pRoot)
     return true;
 }
 
+list<cJSON*> CJsonFilter::GetObject(cJSON* pParent, const char *strAttrName)
+{
+    list<cJSON*> ret;
+
+    if(NULL == pParent)
+    {
+        return ret;
+    }
+
+    if(cJSON_IsObject(pParent))
+    {
+        cJSON *pChild = cJSON_GetObjectItem(pParent, strAttrName);
+        if(NULL != pChild)
+        {
+            ret.push_back(pChild);
+        }
+    }
+    else if(cJSON_IsArray(pParent))
+    {
+        int nSize = cJSON_GetArraySize(pParent);
+        for(int i = 0; i < nSize; i++)
+        {
+            cJSON *pChild = cJSON_GetArrayItem(pParent,i);
+            list<cJSON*> tmp = GetObject(pChild,strAttrName);
+            for(list<cJSON*>::iterator it = tmp.begin(); it != tmp.end(); it++)
+            {
+                ret.push_back(*it);
+            }
+            tmp.clear();
+        }
+    }
+
+    return ret;
+}
+
+list<cJSON*> CJsonFilter::GetObject(list<cJSON*> &listParent, const char *strAttrName)
+{
+    list<cJSON*> ret;
+    for(list<cJSON*>::iterator it = listParent.begin(); it != listParent.end(); it++)
+    {
+        list<cJSON*> tmp = GetObject(*it,strAttrName);
+        for(list<cJSON*>::iterator jt = tmp.begin(); jt != tmp.end(); jt++)
+        {
+            ret.push_back(*jt);
+        }
+        tmp.clear();
+    }
+
+    return ret;
+}
+
 bool CJsonFilter::Match(cJSON* pRoot, CSimpleFilterExpr &sfe)
 {
-    cJSON* pAttr = pRoot;
     list<string>::iterator it = sfe.m_listAttrName.begin();
-    for(; it != sfe.m_listAttrName.end(); )
-    {
-        if(cJSON_IsObject(pAttr))
-        {
-            pAttr = cJSON_GetObjectItem(pAttr,(*it).c_str());
-        }
-        else if(cJSON_IsArray(pAttr))
-        {
-            pAttr = cJSON_GetArrayItem(pAttr,0);
-            continue;
-        }
-        else
-        {
-            return false;
-        }
+    list<cJSON*> listParent, listChild;
+    listParent.push_back(pRoot);
 
-        if(NULL == pAttr)
+    for(; it != sfe.m_listAttrName.end(); it++)
+    {
+        listChild.clear();
+        listChild = GetObject(listParent, (*it).c_str());
+        listParent.clear();
+
+        if(0 == listChild.size())
         {
             return false;
         }
-        it++;
+        listParent = listChild;
     }
     
-    for(it = sfe.m_listValue.begin(); it != sfe.m_listValue.end(); it++)
+    for(list<cJSON*>::iterator jt = listChild.begin(); jt != listChild.end(); jt++)
     {
-        cJSON* pNumber = cJSON_Parse((*it).c_str());
-        string strTmp = string("\"") + *it + string("\"");
-        cJSON* pString = cJSON_Parse(strTmp.c_str());
-
-        if(cJSON_Compare(pAttr,pNumber,false) || cJSON_Compare(pAttr,pString,false))
+        cJSON* pAttr = *jt;
+        for(it = sfe.m_listValue.begin(); it != sfe.m_listValue.end(); it++)
         {
+            cJSON* pNumber = cJSON_Parse((*it).c_str());
+            string strTmp = string("\"") + *it + string("\"");
+            cJSON* pString = cJSON_Parse(strTmp.c_str());
+
+            if(cJSON_Compare(pAttr,pNumber,false) || cJSON_Compare(pAttr,pString,false))
+            {
+                cJSON_Delete(pNumber);
+                cJSON_Delete(pString);
+                return true;
+            }
             cJSON_Delete(pNumber);
             cJSON_Delete(pString);
-            return true;
         }
-        cJSON_Delete(pNumber);
-        cJSON_Delete(pString);
     }
 
     return false;
