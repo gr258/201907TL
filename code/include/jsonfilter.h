@@ -11,6 +11,22 @@
 
 using namespace std;
 
+#define OP_EQ       0
+#define OP_NEQ      1
+#define OP_GT       2
+#define OP_LT       3
+#define OP_GTE      4
+#define OP_LTE      5
+#define OP_CONT     6
+#define OP_NCONT    7
+
+struct CSimpleFilterExpr
+{
+    list<string>    m_listAttrName;
+    list<string>    m_listValue;
+    int             m_op;
+};
+
 class CJsonFilter
 {
 public:
@@ -21,11 +37,16 @@ public:
     string  GetResult();
     void    PrintResult();
     string  ReadFile(const char * filename);
+    bool    AddFilter(string &strSimpleFilterExpr);
+    list<string>    SplitString(string &input_string, char delimiter);
+    bool    Match(cJSON* pRoot);
+    bool    Match(cJSON* pRoot, CSimpleFilterExpr &sfe);
+    bool    Match(cJSON* pJsonStruct, list<string> &listValue);
 private:
     cJSON*  m_pJsonData;
     string  m_strResult;
     string  m_strErrMsg;
-    list<string> m_listSimpleFilterExpr;
+    list<CSimpleFilterExpr>     m_listFilterExpr;
 };
 
 #endif
