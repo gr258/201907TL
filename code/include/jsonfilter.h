@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+#include <map>
 #include <malloc.h>
 #include <fstream>
 #include <sstream>
@@ -35,20 +36,21 @@ public:
     bool    Parse(string &strJson, string &strFilter);
     void    Clear();
     string  GetResult();
-    void    PrintResult();
+    void    Show(cJSON* pNode);
     string  ReadFile(const char * filename);
     bool    AddFilter(string &strSimpleFilterExpr);
     list<string>    SplitString(string &input_string, char delimiter);
     bool    Match(cJSON* pRoot);
     bool    Match(cJSON* pRoot, CSimpleFilterExpr &sfe);
-    bool    Match(cJSON* pJsonStruct, list<string> &listValue);
     list<cJSON*> GetObject(cJSON* pParent, const char *strAttrName);
     list<cJSON*> GetObject(list<cJSON*> &listParent, const char *strAttrName);
+    void    Remove(cJSON* pNode);
 private:
     cJSON*  m_pJsonData;
     string  m_strResult;
     string  m_strErrMsg;
     list<CSimpleFilterExpr>     m_listFilterExpr;
+    map<cJSON*,cJSON*>          m_mapChildParent;
 };
 
 #endif
