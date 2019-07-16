@@ -11,6 +11,7 @@ include_directories(
   ${CMAKE_CURRENT_LIST_DIR}/include
   ${CODE_BASE}/include
   ${GTEST_BASE}/include
+  ${JSON_BASE}/include
 )
 
 
