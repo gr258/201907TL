@@ -44,7 +44,6 @@ bool CJsonFilter::ParseJsonData(string &strJson)
     m_pJsonData = cJSON_Parse(strJson.c_str());
     if (m_pJsonData == NULL)
     {
-        m_strErrMsg = string("cJSON_Parse error at ") + cJSON_GetErrorPtr();
         return false;
     }
 
@@ -56,7 +55,6 @@ bool CJsonFilter::ParseFilters(string &strFilters)
     list<string> listFilter = SplitString(strFilters, '&');
     if(0 == listFilter.size())
     {
-        m_strErrMsg = string("ParseFilters error 1");
         return false;
     }
 

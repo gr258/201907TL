@@ -30,9 +30,15 @@ private:
     bool    ParseAttrsAndOp(string &strAttrsAndOp);
     bool    ParseValue(string &strValues);
     void    ParseOp();
-    void    Delete(cJSON* pNode);
-    list<cJSON*>    GetObject(cJSON* pParent, const char *strAttrName);
-    list<cJSON*>    GetObject(list<cJSON*> &listParent, const char *strAttrName);
+    bool    GetAttrsList(cJSON*       pRoot, list<cJSON*> &listAttr);
+    bool    GetObject(list<cJSON*> &listParent, const char *strAttrName, list<cJSON*> &listChild);
+    void    GetObject(cJSON* pParent, const char *strAttrName, list<cJSON*> &listChild);
+    void    DeleteEntry(cJSON* pChild);
+    bool    MatchValue(list<cJSON*> &listAttr);
+    bool    MatchValue(cJSON* pAttr);
+    bool    MatchValue(cJSON* pAttr, string &strValue);
+    bool    MatchStringValue(string &left, string &right);
+    bool    MatchNumberValue(double left, double right);
 
 private:
     list<string>        m_listAttrName;

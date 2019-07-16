@@ -27,7 +27,6 @@ private:
 
 private:
     cJSON*  m_pJsonData;
-    string  m_strErrMsg;
     string  m_strResult;
     list<CSimpleFilterExpr>     m_listFilterExpr;
 };
