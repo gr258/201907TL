@@ -3,14 +3,7 @@
 
 CSimpleFilterExpr::CSimpleFilterExpr()
 {
-    m_mapOp["eq"]       =   OP_EQ;
-    m_mapOp["neq"]      =   OP_NEQ;
-    m_mapOp["gt"]       =   OP_GT;
-    m_mapOp["lt"]       =   OP_LT;
-    m_mapOp["gte"]      =   OP_GTE;
-    m_mapOp["lte"]      =   OP_LTE;
-    m_mapOp["cont"]     =   OP_CONT;
-    m_mapOp["ncont"]    =   OP_NCONT;
+
 }
 
 CSimpleFilterExpr::~CSimpleFilterExpr()
@@ -22,7 +15,6 @@ void CSimpleFilterExpr::Clear()
 {
     m_listAttrName.clear();
     m_listValue.clear();
-    m_mapOp.clear();
     m_mapChildParent.clear();
 }
 
@@ -56,7 +48,7 @@ bool CSimpleFilterExpr::ParseAttrsAndOp(string &strAttrsAndOp)
 
 bool CSimpleFilterExpr::ParseValue(string &strValues)
 {
-    m_listValue = SplitString(strValues, '.');
+    m_listValue = SplitString(strValues, ',');
     if(m_listValue.size() <= 0)
         return false;
 
@@ -65,16 +57,26 @@ bool CSimpleFilterExpr::ParseValue(string &strValues)
 
 void CSimpleFilterExpr::ParseOp()
 {
-    m_nOp = m_mapOp["eq"];
+    m_nOp = OP_EQ;
     
     if(m_listAttrName.size() <= 1)
         return;
     
     string strOp = m_listAttrName.back();
-    if(0 == m_mapOp.count(strOp))
+    map<string, int> mapOp;
+    mapOp["eq"] = OP_EQ;
+    mapOp["neq"] = OP_NEQ;
+    mapOp["gt"] = OP_GT;
+    mapOp["lt"] = OP_LT;
+    mapOp["gte"] = OP_GTE;
+    mapOp["lte"] = OP_LTE;
+    mapOp["cont"] = OP_CONT;
+    mapOp["ncont"] = OP_NCONT;
+
+    if(0 == mapOp.count(strOp))
         return;
-        
-    m_nOp = m_mapOp[strOp];
+
+    m_nOp = mapOp[strOp];
     m_listAttrName.pop_back();
 }
 
@@ -178,13 +180,15 @@ bool CSimpleFilterExpr::MatchValue(cJSON* pAttr)
         {
             nMatchedNum++;
         }
-        else
-        {
-            DeleteEntry(pAttr);
-        }
     }
 
-    return (nMatchedNum > 0);
+    if(0 == nMatchedNum)
+    {
+        DeleteEntry(pAttr);
+        return false;
+    }
+    
+    return true;
 }
 
 bool CSimpleFilterExpr::MatchValue(cJSON* pAttr, string &strValue)
@@ -194,38 +198,53 @@ bool CSimpleFilterExpr::MatchValue(cJSON* pAttr, string &strValue)
     if(cJSON_IsString(pAttr))
     {
         string strAttr = pAttr->valuestring;
-        bResult = MatchStringValue(strAttr, strValue);
+        bResult = CompareString(strAttr, strValue);
     }
     else if(cJSON_IsNumber(pAttr))
     {
         cJSON* pValue = cJSON_Parse(strValue.c_str());
         if(cJSON_IsNumber(pValue))
-            bResult = MatchNumberValue(pAttr->valuedouble, pValue->valuedouble);
+            bResult = CompareNumber(pAttr->valuedouble, pValue->valuedouble);
 
         cJSON_Delete(pValue);
+    }
+    else if(cJSON_IsArray(pAttr))
+    {
     }
 
     return bResult;
 }
 
-bool CSimpleFilterExpr::MatchStringValue(string &left, string &right)
+bool CSimpleFilterExpr::CompareString(string &strAttr, string &strValue)
 {
-    switch(m_nOp)
-    {
-        case OP_EQ:
-            return (left.compare(right) == 0);
-        default:
-            break;
-    }
-    return false;
+    double diff = strValue.compare(strAttr);
+    return CompareResult(diff);
 }
 
-bool CSimpleFilterExpr::MatchNumberValue(double left, double right)
+bool CSimpleFilterExpr::CompareNumber(double dAttr, double dValue)
+{
+    double diff = dAttr - dValue;
+    return CompareResult(diff);
+}
+
+bool CSimpleFilterExpr::CompareResult(double diff)
 {
     switch(m_nOp)
     {
         case OP_EQ:
-            return (left == right);
+        case OP_CONT:
+            return (diff == 0);
+        case OP_NEQ:
+        case OP_NCONT:
+            return (diff != 0);
+        case OP_GT:
+            return (diff > 0);
+        case OP_LT:
+            return (diff < 0);
+        case OP_GTE:
+            return (diff >= 0);
+        case OP_LTE:
+            return (diff <= 0);
         default:
             break;
     }

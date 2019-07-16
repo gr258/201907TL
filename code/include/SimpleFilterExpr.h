@@ -37,14 +37,14 @@ private:
     bool    MatchValue(list<cJSON*> &listAttr);
     bool    MatchValue(cJSON* pAttr);
     bool    MatchValue(cJSON* pAttr, string &strValue);
-    bool    MatchStringValue(string &left, string &right);
-    bool    MatchNumberValue(double left, double right);
+    bool    CompareString(string &strAttr, string &strValue);
+    bool    CompareNumber(double dAttr, double dValue);
+    bool    CompareResult(double diff);
 
 private:
     list<string>        m_listAttrName;
     list<string>        m_listValue;
     int                 m_nOp;
-    map<string,int>     m_mapOp;
     map<cJSON*,cJSON*>  m_mapChildParent;
 };
 
