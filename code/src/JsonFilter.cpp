@@ -43,9 +43,7 @@ bool CJsonFilter::ParseJsonData(string &strJson)
 {
     m_pJsonData = cJSON_Parse(strJson.c_str());
     if (m_pJsonData == NULL)
-    {
         return false;
-    }
 
     return true;
 }
@@ -54,9 +52,7 @@ bool CJsonFilter::ParseFilters(string &strFilters)
 {
     list<string> listFilter = SplitString(strFilters, '&');
     if(0 == listFilter.size())
-    {
         return false;
-    }
 
     for(list<string>::iterator it = listFilter.begin(); it != listFilter.end(); it++)
     {

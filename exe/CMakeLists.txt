@@ -17,4 +17,4 @@ add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 add_dependencies(${PROJECT_NAME} SOURCE_CODE)
 
-target_link_libraries(${PROJECT_NAME} SOURCE_CODE)
+target_link_libraries(${PROJECT_NAME} SOURCE_CODE json)

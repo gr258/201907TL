@@ -1,16 +1,16 @@
 #include <stdio.h>
-//#include "reader.h"
+#include "JsonFilterApi.h"
 
 int main(int argc, char *argv[])
 {
-    if(argc < 2)
+    if(argc < 3)
     {
-        printf("Usage: %s [filename]\n",argv[0]);
+        printf("Usage: %s [jsonfile] [filterExpr]\n",argv[0]);
     }
     else
     {
-        //reader r(argv[1]);
-        //r.show();
+        string strResult = JsonFilter(argv[1], argv[2]);
+        printf("%s\n", strResult.c_str());
     }
     return 0;
 }

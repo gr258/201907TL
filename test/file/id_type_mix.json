@@ -1,0 +1,5 @@
+[
+{"id":123, "weight":100, "parts":[{"id":1, "color":"red"}, {"id":2, "color":"green"}, {"id":[4,5,6], "color":"black"}]},
+{"id":456, "weight":500, "parts":[{"id":3, "color":"green"}, {"id":2, "color":"blue"}]},
+{"id":789, "weight":800, "parts":[{"id":1, "color":["green","yellow"]}, {"id":3, "color":"blue"}, {"id":5, "color":"red"}]}
+]
