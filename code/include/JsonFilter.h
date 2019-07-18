@@ -9,6 +9,8 @@
 
 using namespace std;
 
+typedef list<CSimpleFilterExpr> LSFE;
+
 class CJsonFilter
 {
 public:
@@ -18,17 +20,22 @@ public:
 
 private:    
     void    Clear();
-    bool    Parse(string &strJson, string &strFilters);
+    
+    bool    ParseInput(string &strJson, string &strFilters);
     bool    ParseJsonData(string &strJson);
     bool    ParseFilters(string &strFilters);
     bool    ParseFilter(string &strFilter);
-    void    Filter();
-    bool    MatchFilter(cJSON* pRoot);
+    
+    void    FilterOutMatchList();
+    void    GetUnmatchList(LJSON &listUnmatch);
+    void    DelUnmatchList(LJSON &listUnmatch);
+    bool    IsMatchFilter(cJSON* pRoot);
+    void    SaveResult();
 
 private:
     cJSON*  m_pJsonData;
     string  m_strResult;
-    list<CSimpleFilterExpr>     m_listFilterExpr;
+    LSFE    m_listFilterExpr;
 };
 
 #endif

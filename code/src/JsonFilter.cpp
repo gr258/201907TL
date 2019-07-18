@@ -1,19 +1,27 @@
 #include "JsonFilter.h"
 #include "Util.h"
-#include <malloc.h>
 
 CJsonFilter::CJsonFilter(const char * jsonfile, const char * filterExpr)
     : m_pJsonData(NULL)
 {
+    m_strResult = "[]";
     string strJson = ReadFile(jsonfile);
     string strFilter(filterExpr);
-    Parse(strJson,strFilter);
-    Filter();
+    if(ParseInput(strJson,strFilter))
+    {
+        FilterOutMatchList();
+        SaveResult();
+    }
 }
 
 CJsonFilter::~CJsonFilter()
 {
     Clear();
+}
+
+string CJsonFilter::GetResult()
+{
+    return m_strResult;
 }
 
 void CJsonFilter::Clear()
@@ -26,10 +34,8 @@ void CJsonFilter::Clear()
     m_listFilterExpr.clear();
 }
 
-bool CJsonFilter::Parse(string &strJson, string &strFilters)
+bool CJsonFilter::ParseInput(string &strJson, string &strFilters)
 {
-    Clear();
-
     if(!ParseJsonData(strJson))
         return false;
 
@@ -50,11 +56,11 @@ bool CJsonFilter::ParseJsonData(string &strJson)
 
 bool CJsonFilter::ParseFilters(string &strFilters)
 {
-    list<string> listFilter = SplitString(strFilters, '&');
+    LSTR listFilter = SplitString(strFilters, '&');
     if(0 == listFilter.size())
         return false;
 
-    for(list<string>::iterator it = listFilter.begin(); it != listFilter.end(); it++)
+    for(LSTR::iterator it = listFilter.begin(); it != listFilter.end(); it++)
     {
         if(!ParseFilter(*it))
         {
@@ -76,26 +82,37 @@ bool CJsonFilter::ParseFilter(string &strFilter)
     return true;
 }
 
-void CJsonFilter::Filter()
+void CJsonFilter::FilterOutMatchList()
 {
-    m_strResult = "[]";
     if(!cJSON_IsArray(m_pJsonData))
         return;
-    
-    int nSize = cJSON_GetArraySize(m_pJsonData);
-    list<cJSON*> toDelete;
-    for(int i = 0; i < nSize; i++)
-    {
-        cJSON* pArryItem = cJSON_GetArrayItem(m_pJsonData, i);
-        if(!MatchFilter(pArryItem))
-            toDelete.push_back(pArryItem);
-    }
 
-    for(list<cJSON*>::iterator it = toDelete.begin(); it != toDelete.end(); it++)
+    LJSON listUnmatch;
+    GetUnmatchList(listUnmatch);
+    DelUnmatchList(listUnmatch);
+    SaveResult();
+}
+
+void CJsonFilter::GetUnmatchList(LJSON &listUnmatch)
+{
+    cJSON *pChild = NULL;
+    cJSON_ArrayForEach(pChild,m_pJsonData)
+    {
+        if(!IsMatchFilter(pChild))
+            listUnmatch.push_back(pChild);
+    }
+}
+
+void CJsonFilter::DelUnmatchList(LJSON &listUnmatch)
+{
+    for(LJSON::iterator it = listUnmatch.begin(); it != listUnmatch.end(); it++)
     {
         cJSON_Delete(cJSON_DetachItemViaPointer(m_pJsonData, *it));
     }
-    
+}
+
+void CJsonFilter::SaveResult()
+{
     char* pJsonString = cJSON_PrintUnformatted(m_pJsonData);
     if (pJsonString != NULL)
     {
@@ -104,22 +121,15 @@ void CJsonFilter::Filter()
     }
 }
 
-string CJsonFilter::GetResult()
-{
-    return m_strResult;
-}
-
-bool CJsonFilter::MatchFilter(cJSON* pRoot)
+bool CJsonFilter::IsMatchFilter(cJSON* pRoot)
 {
     bool bRet = true;
-    
-    if(0 == m_listFilterExpr.size())
-        return false;
 
+    //CSimpleFilterExpr.IsMatchFilter() function will delete unmatch entry, so duplicate
     cJSON* pDup = cJSON_Duplicate(pRoot, true);
-    for(list<CSimpleFilterExpr>::iterator it = m_listFilterExpr.begin(); it != m_listFilterExpr.end(); it++)
+    for(LSFE::iterator it = m_listFilterExpr.begin(); it != m_listFilterExpr.end(); it++)
     {
-        if(!(*it).MatchFilter(pDup))
+        if(!(*it).IsMatchFilter(pDup))
         {
             bRet = false;
             break;

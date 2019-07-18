@@ -24,7 +24,7 @@ bool CSimpleFilterExpr::ParseFilter(string &strFilter)
     if(!ParseAttrsAndOp(strList.front()))
         return false;
     
-    if(!ParseValue(strList.back()))
+    if(!ParseValues(strList.back()))
         return false;
     
     return true;
@@ -66,7 +66,7 @@ void CSimpleFilterExpr::ParseOp()
     m_listAttrName.pop_back();
 }
 
-bool CSimpleFilterExpr::ParseValue(string &strValues)
+bool CSimpleFilterExpr::ParseValues(string &strValues)
 {
     m_listValue = SplitString(strValues, ',');
     if(m_listValue.size() <= 0)
@@ -104,7 +104,7 @@ bool CSimpleFilterExpr::IsArrayOp()
     return false;
 }
 
-bool CSimpleFilterExpr::MatchFilter(cJSON * pRoot)
+bool CSimpleFilterExpr::IsMatchFilter(cJSON * pRoot)
 {
     LJSON listAttr;
 
@@ -121,7 +121,7 @@ bool CSimpleFilterExpr::GetAttrList(cJSON*       pRoot, LJSON &listAttr)
 
     for(LSTR::iterator it = m_listAttrName.begin(); it != m_listAttrName.end(); it++)
     {
-        if(!GetListChildFromParentList(listParent, (*it).c_str(), listAttr))
+        if(!GetChildListFromParentList(listParent, (*it).c_str(), listAttr))
             return false;
 
         listParent = listAttr;
@@ -130,79 +130,86 @@ bool CSimpleFilterExpr::GetAttrList(cJSON*       pRoot, LJSON &listAttr)
     return true;
 }
 
-bool CSimpleFilterExpr::GetListChildFromParentList(LJSON &listParent, const char *strAttrName, LJSON &listChild)
+bool CSimpleFilterExpr::GetChildListFromParentList(LJSON &listParent, const char *strAttrName, LJSON &listChild)
 {
     listChild.clear();
     for(LJSON::iterator it = listParent.begin(); it != listParent.end(); it++)
     {
-        GetListChildFromParentNode(*it, strAttrName, listChild);
+        GetChildListFromParentNode(*it, strAttrName, listChild);
     }
     listParent.clear();
 
     return (listChild.size() > 0);
 }
 
-void CSimpleFilterExpr::GetListChildFromParentNode(cJSON* pParent, const char *strAttrName, LJSON &listChild)
+void CSimpleFilterExpr::GetChildListFromParentNode(cJSON* pParent, const char *strAttrName, LJSON &listChild)
 {
     if(cJSON_IsObject(pParent))
     {
-        GetListChildFromObject(pParent, strAttrName, listChild);
+        GetChildListFromObjectNode(pParent, strAttrName, listChild);
         return;
     }
 
     if(cJSON_IsArray(pParent))
     {
-        GetListChildFromArray(pParent, strAttrName, listChild);
+        GetChildListFromArrayNode(pParent, strAttrName, listChild);
         return;
     }
 }
 
-void CSimpleFilterExpr::GetListChildFromObject(cJSON* pParent, const char *strAttrName, LJSON &listChild)
+void CSimpleFilterExpr::GetChildListFromObjectNode(cJSON* pParent, const char *strAttrName, LJSON &listChild)
 {
     cJSON *pChild = cJSON_GetObjectItem(pParent, strAttrName);
     if(NULL != pChild)
     {
-        RecordEntry(pParent, pChild);
+        SetParent(pChild, pParent);
         listChild.push_back(pChild);
     }
 }
 
-void CSimpleFilterExpr::GetListChildFromArray(cJSON* pParent, const char *strAttrName, LJSON &listChild)
+void CSimpleFilterExpr::GetChildListFromArrayNode(cJSON* pParent, const char *strAttrName, LJSON &listChild)
 {
-    int nSize = cJSON_GetArraySize(pParent);
-    for(int i = 0; i < nSize; i++)
+    cJSON *pChild = NULL;
+    cJSON_ArrayForEach(pChild,pParent)
     {
-        cJSON *pChild = cJSON_GetArrayItem(pParent,i);
-        if(NULL != pChild)
-        {
-            RecordEntry(pParent, pChild);
-            GetListChildFromParentNode(pChild, strAttrName, listChild);
-        }
+        SetParent(pChild, pParent);
+        GetChildListFromParentNode(pChild, strAttrName, listChild);
     }
 }
 
-void CSimpleFilterExpr::RecordEntry(cJSON* pParent, cJSON* pChild)
+void CSimpleFilterExpr::SetParent(cJSON* pChild, cJSON* pParent)
 {
     m_mapChildParent[pChild] = pParent;
 }
 
-void CSimpleFilterExpr::DeleteArrayEntry(cJSON* pChild)
+cJSON* CSimpleFilterExpr::GetParent(cJSON* pChild)
 {
     if(NULL == pChild)
-        return;
+        return NULL;
 
-    cJSON* pParent = m_mapChildParent[pChild];
+    if(0 == m_mapChildParent.count(pChild))
+        return NULL;
+
+    return m_mapChildParent[pChild];
+}
+
+void CSimpleFilterExpr::DelParentEntry(cJSON* pChild)
+{
+    cJSON* pParent = GetParent(pChild);
     cJSON* ppParent = pParent;
     do
     {
         pParent = ppParent;
-        ppParent = m_mapChildParent[pParent];
+        ppParent = GetParent(pParent);
     }while(cJSON_IsObject(ppParent));
 
     if(!cJSON_IsArray(ppParent))
         return;
 
     cJSON_Delete(cJSON_DetachItemViaPointer(ppParent, pParent));
+    
+    if(0 == cJSON_GetArraySize(ppParent))
+        DelParentEntry(ppParent);
 }
 
 bool CSimpleFilterExpr::IsAttrListMatchValues(LJSON &listAttr)
@@ -214,7 +221,7 @@ bool CSimpleFilterExpr::IsAttrListMatchValues(LJSON &listAttr)
         if(IsAttrNodeMatchValues(*it))
             nMatchedNum++;
         else
-            DeleteArrayEntry(*it);
+            DelParentEntry(*it);
     }
     
     return (nMatchedNum > 0);
@@ -266,21 +273,21 @@ bool CSimpleFilterExpr::CompareValue(cJSON* pAttr, string &strValue)
     return false;
 }
 
-bool CSimpleFilterExpr::CompareString(cJSON* pAttr, string &strValue)
+bool CSimpleFilterExpr::CompareString(cJSON* pString, string &strValue)
 {
-    string strAttr = pAttr->valuestring;
+    string strAttr = pString->valuestring;
     double diff = strAttr.compare(strValue);
     return CompareResult(diff);
 }
 
-bool CSimpleFilterExpr::CompareNumber(cJSON* pAttr, string &strValue)
+bool CSimpleFilterExpr::CompareNumber(cJSON* pNumber, string &strValue)
 {
     double  diff = 0;
     bool    bValidNumber = false;
     cJSON*  pValue = cJSON_Parse(strValue.c_str());
     if(cJSON_IsNumber(pValue))
     {
-        diff = pAttr->valuedouble - pValue->valuedouble;
+        diff = pNumber->valuedouble - pValue->valuedouble;
         bValidNumber = true;
     }
     cJSON_Delete(pValue);
@@ -288,16 +295,16 @@ bool CSimpleFilterExpr::CompareNumber(cJSON* pAttr, string &strValue)
     return bValidNumber?CompareResult(diff):false;
 }
 
-bool CSimpleFilterExpr::CompareArray(cJSON* pAttr, string &strValue)
+bool CSimpleFilterExpr::CompareArray(cJSON* pArray, string &strValue)
 {
-    int nMatchedNum = 0, nSize = cJSON_GetArraySize(pAttr);
+    int nMatchedNum = 0, nSize = cJSON_GetArraySize(pArray);
 
-    if(nSize < 0)
+    if(0 == nSize)
         return false;
 
-    for(int i = 0; i < nSize; i++)
+    cJSON *pChild = NULL;
+    cJSON_ArrayForEach(pChild,pArray)
     {
-        cJSON *pChild = cJSON_GetArrayItem(pAttr,i);
         if(CompareValue(pChild, strValue))
             nMatchedNum++;
     }

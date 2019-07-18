@@ -151,6 +151,18 @@ TEST(JSONFILTER,GIVEN_BASIC_JSON_FILE_WHEN_FILTER_IS_ID_LTE_1_2_THEN_RETURN_NONE
     EXPECT_EQ(expect,JsonFilter("../test/file/basic.json","parts.id.lte=1,2"));
 }
 
+TEST(JSONFILTER,GIVEN_BASIC_JSON_FILE_WHEN_FILTER_IS_EMPTY_THEN_RETURN_NONE)
+{
+    string expect = Normalized("[\n]");
+    EXPECT_EQ(expect,JsonFilter("../test/file/basic.json",""));
+}
+
+TEST(JSONFILTER,GIVEN_BASIC_JSON_FILE_WHEN_FILTER_IS_VALID_AND_INVALID_THEN_RETURN_NONE)
+{
+    string expect = Normalized("[\n]");
+    EXPECT_EQ(expect,JsonFilter("../test/file/basic.json","weight.eq=100&invalid.filter"));
+}
+
 TEST(JSONFILTER,GIVEN_ID_TYPE_ARRAY_JSON_FILE_WHEN_FILTER_IS_ID_CONT_8_THEN_RETURN_ONE)
 {
     string expect = Normalized("[\n{\"id\":456, \"weight\":500, \"parts\":[{\"id\":[3,6], \"color\":\"green\"}, {\"id\":[2,8], \"color\":\"blue\"}]}\n]");
@@ -221,6 +233,18 @@ TEST(JSONFILTER,GIVEN_OBJECT_IN_ARRAY_JSON_FILE_WHEN_FILTER_IS_NAME_EQ_CAR_AND_C
 {
     string expect = Normalized("[\n]");
     EXPECT_EQ(expect,JsonFilter("../test/file/object_in_array.json","parts.item.name.eq=car&parts.color.eq=green"));
+}
+
+TEST(JSONFILTER,GIVEN_ARRAY_IN_ARRAY_JSON_FILE_WHEN_FILTER_IS_NAME_EQ_CAR_AND_COLOR_EQ_RED_THEN_RETURN_NONE)
+{
+    string expect = Normalized("[{\"id\":123,\"weight\":100,\"parts\":[{\"id\":1,\"color\":\"red\",\"item\":[{\"name\":\"car\"},{\"name\":\"vehicle\"}]},{\"id\":2,\"color\":\"green\",\"item\":[{\"name\":\"ship\"},{\"name\":\"boat\"}]}]}]");
+    EXPECT_EQ(expect,JsonFilter("../test/file/array_in_array.json","parts.item.name.eq=car&parts.color.eq=red"));
+}
+
+TEST(JSONFILTER,GIVEN_ARRAY_IN_ARRAY_JSON_FILE_WHEN_FILTER_IS_NAME_EQ_CAR_AND_COLOR_EQ_GREEN_THEN_RETURN_NONE)
+{
+    string expect = Normalized("[\n]");
+    EXPECT_EQ(expect,JsonFilter("../test/file/array_in_array.json","parts.item.name.eq=car&parts.color.eq=green"));
 }
 
 

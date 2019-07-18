@@ -27,35 +27,41 @@ public:
     ~CSimpleFilterExpr();
     void    Clear();
     bool    ParseFilter(string &strFilter);
-    bool    MatchFilter(cJSON* pRoot);
+    bool    IsMatchFilter(cJSON* pRoot);
 
 private:    
     bool    ParseAttrsAndOp(string &strAttrsAndOp);
-    bool    ParseValue(string &strValues);
+    bool    ParseValues(string &strValues);
     void    ParseOp();
+    
     bool    IsOneValueOp();
     bool    IsNotOp();
     bool    IsArrayOp();
+    
     bool    GetAttrList(cJSON*       pRoot, LJSON &listAttr);
-    bool    GetListChildFromParentList(LJSON &listParent, const char *strAttrName, LJSON &listChild);
-    void    GetListChildFromParentNode(cJSON* pParent, const char *strAttrName, LJSON &listChild);
-    void    GetListChildFromObject(cJSON* pParent, const char *strAttrName, LJSON &listChild);
-    void    GetListChildFromArray(cJSON* pParent, const char *strAttrName, LJSON &listChild);
-    void    RecordEntry(cJSON* pParent, cJSON* pChild);
-    void    DeleteArrayEntry(cJSON* pChild);
+    bool    GetChildListFromParentList(LJSON &listParent, const char *strAttrName, LJSON &listChild);
+    void    GetChildListFromParentNode(cJSON* pParent, const char *strAttrName, LJSON &listChild);
+    void    GetChildListFromObjectNode(cJSON* pParent, const char *strAttrName, LJSON &listChild);
+    void    GetChildListFromArrayNode(cJSON* pParent, const char *strAttrName, LJSON &listChild);
+
+    void    SetParent(cJSON* pChild, cJSON* pParent);
+    cJSON*  GetParent(cJSON* pChild);
+    void    DelParentEntry(cJSON* pChild);
+
     bool    IsAttrListMatchValues(LJSON &listAttr);
     bool    IsAttrNodeMatchValues(cJSON* pAttr);
     bool    IsAttrNodeMatchOp(cJSON* pAttr);
+
     bool    CompareValue(cJSON* pAttr, string &strValue);
-    bool    CompareString(cJSON* pAttr, string &strValue);
-    bool    CompareNumber(cJSON* pAttr, string &strValue);
-    bool    CompareArray(cJSON* pAttr, string &strValue);
+    bool    CompareString(cJSON* pString, string &strValue);
+    bool    CompareNumber(cJSON* pNumber, string &strValue);
+    bool    CompareArray(cJSON* pArray, string &strValue);
     bool    CompareResult(double diff);
 
 private:
+    int     m_nOp;
     LSTR    m_listAttrName;
     LSTR    m_listValue;
-    int     m_nOp;
     MJSON   m_mapChildParent;
 };
 
