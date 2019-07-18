@@ -135,29 +135,29 @@ bool CSimpleFilterExpr::GetChildListFromParentList(LJSON &listParent, const char
     listChild.clear();
     for(LJSON::iterator it = listParent.begin(); it != listParent.end(); it++)
     {
-        GetChildListFromParentNode(*it, strAttrName, listChild);
+        GetChildListFromParentItem(*it, strAttrName, listChild);
     }
     listParent.clear();
 
     return (listChild.size() > 0);
 }
 
-void CSimpleFilterExpr::GetChildListFromParentNode(cJSON* pParent, const char *strAttrName, LJSON &listChild)
+void CSimpleFilterExpr::GetChildListFromParentItem(cJSON* pParent, const char *strAttrName, LJSON &listChild)
 {
     if(cJSON_IsObject(pParent))
     {
-        GetChildListFromObjectNode(pParent, strAttrName, listChild);
+        GetChildListFromObjectItem(pParent, strAttrName, listChild);
         return;
     }
 
     if(cJSON_IsArray(pParent))
     {
-        GetChildListFromArrayNode(pParent, strAttrName, listChild);
+        GetChildListFromArrayItem(pParent, strAttrName, listChild);
         return;
     }
 }
 
-void CSimpleFilterExpr::GetChildListFromObjectNode(cJSON* pParent, const char *strAttrName, LJSON &listChild)
+void CSimpleFilterExpr::GetChildListFromObjectItem(cJSON* pParent, const char *strAttrName, LJSON &listChild)
 {
     cJSON *pChild = cJSON_GetObjectItem(pParent, strAttrName);
     if(NULL != pChild)
@@ -167,13 +167,13 @@ void CSimpleFilterExpr::GetChildListFromObjectNode(cJSON* pParent, const char *s
     }
 }
 
-void CSimpleFilterExpr::GetChildListFromArrayNode(cJSON* pParent, const char *strAttrName, LJSON &listChild)
+void CSimpleFilterExpr::GetChildListFromArrayItem(cJSON* pParent, const char *strAttrName, LJSON &listChild)
 {
     cJSON *pChild = NULL;
     cJSON_ArrayForEach(pChild,pParent)
     {
         SetParent(pChild, pParent);
-        GetChildListFromParentNode(pChild, strAttrName, listChild);
+        GetChildListFromParentItem(pChild, strAttrName, listChild);
     }
 }
 
@@ -218,7 +218,7 @@ bool CSimpleFilterExpr::IsAttrListMatchValues(LJSON &listAttr)
     
     for(LJSON::iterator it = listAttr.begin(); it != listAttr.end(); it++)
     {
-        if(IsAttrNodeMatchValues(*it))
+        if(IsAttrItemMatchValues(*it))
             nMatchedNum++;
         else
             DelParentEntry(*it);
@@ -227,13 +227,13 @@ bool CSimpleFilterExpr::IsAttrListMatchValues(LJSON &listAttr)
     return (nMatchedNum > 0);
 }
 
-bool CSimpleFilterExpr::IsAttrNodeMatchValues(cJSON* pAttr)
+bool CSimpleFilterExpr::IsAttrItemMatchValues(cJSON* pAttr)
 {
     int nMatchedNum = 0, nSize = m_listValue.size();
     
     for(LSTR::iterator it = m_listValue.begin(); it != m_listValue.end(); it++)
     {
-        if(!IsAttrNodeMatchOp(pAttr))
+        if(!IsAttrItemMatchOp(pAttr))
             continue;
 
         if(CompareValue(pAttr, *it))
@@ -248,7 +248,7 @@ bool CSimpleFilterExpr::IsAttrNodeMatchValues(cJSON* pAttr)
         return (nMatchedNum > 0);
 }
 
-bool CSimpleFilterExpr::IsAttrNodeMatchOp(cJSON* pAttr)
+bool CSimpleFilterExpr::IsAttrItemMatchOp(cJSON* pAttr)
 {
     return (!IsArrayOp() == !cJSON_IsArray(pAttr));
 }

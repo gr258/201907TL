@@ -40,17 +40,17 @@ private:
     
     bool    GetAttrList(cJSON*       pRoot, LJSON &listAttr);
     bool    GetChildListFromParentList(LJSON &listParent, const char *strAttrName, LJSON &listChild);
-    void    GetChildListFromParentNode(cJSON* pParent, const char *strAttrName, LJSON &listChild);
-    void    GetChildListFromObjectNode(cJSON* pParent, const char *strAttrName, LJSON &listChild);
-    void    GetChildListFromArrayNode(cJSON* pParent, const char *strAttrName, LJSON &listChild);
+    void    GetChildListFromParentItem(cJSON* pParent, const char *strAttrName, LJSON &listChild);
+    void    GetChildListFromObjectItem(cJSON* pParent, const char *strAttrName, LJSON &listChild);
+    void    GetChildListFromArrayItem(cJSON* pParent, const char *strAttrName, LJSON &listChild);
 
     void    SetParent(cJSON* pChild, cJSON* pParent);
     cJSON*  GetParent(cJSON* pChild);
     void    DelParentEntry(cJSON* pChild);
 
     bool    IsAttrListMatchValues(LJSON &listAttr);
-    bool    IsAttrNodeMatchValues(cJSON* pAttr);
-    bool    IsAttrNodeMatchOp(cJSON* pAttr);
+    bool    IsAttrItemMatchValues(cJSON* pAttr);
+    bool    IsAttrItemMatchOp(cJSON* pAttr);
 
     bool    CompareValue(cJSON* pAttr, string &strValue);
     bool    CompareString(cJSON* pString, string &strValue);
