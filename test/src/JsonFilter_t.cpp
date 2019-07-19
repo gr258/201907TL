@@ -247,4 +247,10 @@ TEST(JSONFILTER,GIVEN_ARRAY_IN_ARRAY_JSON_FILE_WHEN_FILTER_IS_NAME_EQ_CAR_AND_CO
     EXPECT_EQ(expect,JsonFilter("../test/file/array_in_array.json","parts.item.name.eq=car&parts.color.eq=green"));
 }
 
+TEST(JSONFILTER,GIVEN_ATTR_NOT_IN_ARRAY_JSON_FILE_WHEN_FILTER_IS_NAME_EQ_CAR_AND_COLOR_EQ_GREEN_THEN_RETURN_NONE)
+{
+    string expect = Normalized("[{\"id\":123,\"weight\":100,\"parts\":[{\"id\":1,\"color\":\"red\"},{\"id\":2,\"color\":\"green\",\"name\":\"car\"}]}]");
+    EXPECT_EQ(expect,JsonFilter("../test/file/attr_not_in_array.json","parts.name.eq=car&parts.color.eq=green"));
+}
+
 

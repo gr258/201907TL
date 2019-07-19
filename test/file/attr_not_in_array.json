@@ -1,0 +1,4 @@
+[
+{"id":123, "weight":100, "parts":[{"id":1, "color":"red"}, {"id":2, "color":"green", "name":"car"}]},
+{"id":456, "weight":500, "parts":[{"id":3, "color":"green"}, {"id":2, "color":"blue", "name":"car"}]}
+]

@@ -39,10 +39,10 @@ private:
     bool    IsArrayOp();
     
     bool    GetAttrList(cJSON*       pRoot, LJSON &listAttr);
-    bool    GetChildListFromParentList(LJSON &listParent, const char *strAttrName, LJSON &listChild);
-    void    GetChildListFromParentItem(cJSON* pParent, const char *strAttrName, LJSON &listChild);
-    void    GetChildListFromObjectItem(cJSON* pParent, const char *strAttrName, LJSON &listChild);
-    void    GetChildListFromArrayItem(cJSON* pParent, const char *strAttrName, LJSON &listChild);
+    bool    GetChildListFromParentList(LJSON &listParent, const char *strAttrName, LJSON &listChild, LJSON &listUnmatch);
+    void    GetChildListFromParentItem(cJSON* pParent, const char *strAttrName, LJSON &listChild, LJSON &listUnmatch);
+    void    GetChildListFromObjectItem(cJSON* pParent, const char *strAttrName, LJSON &listChild, LJSON &listUnmatch);
+    void    GetChildListFromArrayItem(cJSON* pParent, const char *strAttrName, LJSON &listChild, LJSON &listUnmatch);
 
     void    SetParent(cJSON* pChild, cJSON* pParent);
     cJSON*  GetParent(cJSON* pChild);

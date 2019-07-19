@@ -116,48 +116,55 @@ bool CSimpleFilterExpr::IsMatchFilter(cJSON * pRoot)
 
 bool CSimpleFilterExpr::GetAttrList(cJSON*       pRoot, LJSON &listAttr)
 {
-    LJSON listParent;
+    LJSON listParent, listUnmatch;
     listParent.push_back(pRoot);
 
     for(LSTR::iterator it = m_listAttrName.begin(); it != m_listAttrName.end(); it++)
     {
-        if(!GetChildListFromParentList(listParent, (*it).c_str(), listAttr))
+        if(!GetChildListFromParentList(listParent, (*it).c_str(), listAttr, listUnmatch))
             return false;
 
         listParent = listAttr;
+    }
+    
+    for(LJSON::iterator it = listUnmatch.begin(); it != listUnmatch.end(); it++)
+    {
+        DelParentEntry(*it);
     }
 
     return true;
 }
 
-bool CSimpleFilterExpr::GetChildListFromParentList(LJSON &listParent, const char *strAttrName, LJSON &listChild)
+bool CSimpleFilterExpr::GetChildListFromParentList(LJSON &listParent, const char *strAttrName, LJSON &listChild, LJSON &listUnmatch)
 {
     listChild.clear();
     for(LJSON::iterator it = listParent.begin(); it != listParent.end(); it++)
     {
-        GetChildListFromParentItem(*it, strAttrName, listChild);
+        GetChildListFromParentItem(*it, strAttrName, listChild, listUnmatch);
     }
     listParent.clear();
 
     return (listChild.size() > 0);
 }
 
-void CSimpleFilterExpr::GetChildListFromParentItem(cJSON* pParent, const char *strAttrName, LJSON &listChild)
+void CSimpleFilterExpr::GetChildListFromParentItem(cJSON* pParent, const char *strAttrName, LJSON &listChild, LJSON &listUnmatch)
 {
     if(cJSON_IsObject(pParent))
     {
-        GetChildListFromObjectItem(pParent, strAttrName, listChild);
+        GetChildListFromObjectItem(pParent, strAttrName, listChild, listUnmatch);
         return;
     }
 
     if(cJSON_IsArray(pParent))
     {
-        GetChildListFromArrayItem(pParent, strAttrName, listChild);
+        GetChildListFromArrayItem(pParent, strAttrName, listChild, listUnmatch);
         return;
     }
+
+    listUnmatch.push_back(pParent);
 }
 
-void CSimpleFilterExpr::GetChildListFromObjectItem(cJSON* pParent, const char *strAttrName, LJSON &listChild)
+void CSimpleFilterExpr::GetChildListFromObjectItem(cJSON* pParent, const char *strAttrName, LJSON &listChild, LJSON &listUnmatch)
 {
     cJSON *pChild = cJSON_GetObjectItem(pParent, strAttrName);
     if(NULL != pChild)
@@ -165,15 +172,17 @@ void CSimpleFilterExpr::GetChildListFromObjectItem(cJSON* pParent, const char *s
         SetParent(pChild, pParent);
         listChild.push_back(pChild);
     }
+    else
+        listUnmatch.push_back(pParent);
 }
 
-void CSimpleFilterExpr::GetChildListFromArrayItem(cJSON* pParent, const char *strAttrName, LJSON &listChild)
+void CSimpleFilterExpr::GetChildListFromArrayItem(cJSON* pParent, const char *strAttrName, LJSON &listChild, LJSON &listUnmatch)
 {
     cJSON *pChild = NULL;
     cJSON_ArrayForEach(pChild,pParent)
     {
         SetParent(pChild, pParent);
-        GetChildListFromParentItem(pChild, strAttrName, listChild);
+        GetChildListFromParentItem(pChild, strAttrName, listChild, listUnmatch);
     }
 }
 
@@ -195,13 +204,13 @@ cJSON* CSimpleFilterExpr::GetParent(cJSON* pChild)
 
 void CSimpleFilterExpr::DelParentEntry(cJSON* pChild)
 {
-    cJSON* pParent = GetParent(pChild);
-    cJSON* ppParent = pParent;
-    do
+    cJSON* pParent = pChild;;
+    cJSON* ppParent = GetParent(pParent);
+    while(cJSON_IsObject(ppParent))
     {
         pParent = ppParent;
         ppParent = GetParent(pParent);
-    }while(cJSON_IsObject(ppParent));
+    }
 
     if(!cJSON_IsArray(ppParent))
         return;
